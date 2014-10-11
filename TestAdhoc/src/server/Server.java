@@ -1,16 +1,13 @@
 package server;
 
-import java.awt.*;
-import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
 import gui.UserInterface;
 
-public class Server {
+public class Server extends Observable{
 	public static int port;
 	public static String ip;
 
@@ -62,8 +59,13 @@ public class Server {
 								.getHostAddress();
 						String hostName = socket.getInetAddress().getHostName();
 
+						/*
 						UserInterface.list_clients_model.addElement(username + " - "
 								+ hostAddr + " - " + hostName);
+						*/
+						setChanged();
+					    notifyObservers("Add:"+username+":"+hostAddr+":"+hostName);
+					      
 						list_client_states.add(0);
 
 						list_data.add(new DataPackage());
@@ -159,9 +161,7 @@ public class Server {
 
 			if (Server.ip.isEmpty()) {
 				Server.ip = InetAddress.getLocalHost().getHostAddress();
-			} else {
-				Server.ip = ip;
-			}
+			} // otherwise, specified by user initialization
 			InetAddress addr = InetAddress.getByName(Server.ip);
 			server = new ServerSocket(Server.port, 0, addr);
 
@@ -176,10 +176,13 @@ public class Server {
 	}
 	
 
-	public static void disconnectClient(int index) {
+	public void disconnectClient(int index) {
 		// remove client from memory
 		try {
-			UserInterface.list_clients_model.removeElement(index);
+			//UserInterface.list_clients_model.removeElement(index);
+			setChanged();
+		    notifyObservers("remove:"+index);
+		    
 			list_client_states.remove(index);
 			list_data.remove(index);
 			list_sockets.remove(index);

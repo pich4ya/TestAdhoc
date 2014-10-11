@@ -10,7 +10,7 @@ import javax.swing.event.*;
 import server.DataPackage;
 import server.Server;
 
-public class UserInterface {
+public class UserInterface implements Observer{
 	private Server srv;
 
 	public static JFrame frame;
@@ -144,5 +144,22 @@ public class UserInterface {
 		frame.setSize(350, 400);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
+	}
+
+	@Override
+	public void update(Observable o, Object arg) {
+		// TODO Auto-generated method stub
+		if(o == srv){
+			String input = (String) arg;
+			if(input.startsWith("Add:")){
+				String updated[] = input.split(":");
+				list_clients_model.addElement(updated[1] + " - "
+						+ updated[2] + " - " + updated[3]);
+			}else if(input.startsWith("remove:")){
+				String update[] = input.split(":");
+				int index = Integer.parseInt(update[1]);
+				list_clients_model.removeElement(index);
+			}
+		}
 	}
 }
