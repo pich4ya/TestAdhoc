@@ -8,6 +8,7 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
+import gui.UserInterface;
 
 public class Server {
 	public static int port;
@@ -20,21 +21,12 @@ public class Server {
 
 	private static Runnable accept, sent, receive;
 
-	public static JFrame frame;
-	public static JPanel content;
-	public static JPanel panel1;
-	public static JPanel panel2;
-	public static JPanel panel3;
-
-	public static JButton btn_disconnect;
-	public static JList<String> list_clients;
-	public static DefaultListModel<String> list_clients_model;
-
 	public Server(int port) {
-		this("", port);
+		this("", port); // use localhost (listening in all inf.)
 	}
 	
 	public Server(String ip, int port) {
+		Server.ip = ip;
 		list_sockets = new ArrayList<Socket>();
 		list_client_states = new ArrayList<Integer>();
 		list_data = new ArrayList<DataPackage>();
@@ -43,7 +35,6 @@ public class Server {
 		this.initSentThread();
 		this.initReceiveThread();
 		this.runServer();
-		this.makeUI();
 
 	}
 
@@ -71,7 +62,7 @@ public class Server {
 								.getHostAddress();
 						String hostName = socket.getInetAddress().getHostName();
 
-						list_clients_model.addElement(username + " - "
+						UserInterface.list_clients_model.addElement(username + " - "
 								+ hostAddr + " - " + hostName);
 						list_client_states.add(0);
 
@@ -166,7 +157,7 @@ public class Server {
 
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-			if (ip.isEmpty()) {
+			if (Server.ip.isEmpty()) {
 				Server.ip = InetAddress.getLocalHost().getHostAddress();
 			} else {
 				Server.ip = ip;
@@ -184,124 +175,11 @@ public class Server {
 		}
 	}
 	
-	private void makeUI(){
-		btn_disconnect = new JButton();
-		btn_disconnect.setText("Disconnect");
-		btn_disconnect.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				int selected = list_clients.getSelectedIndex();
-				if (selected != -1) {
-					try {
-						list_client_states.set(selected, 1); // got kick
-					} catch (Exception ex) {
-						JOptionPane.showMessageDialog(null, ex.getMessage(),
-								"Error!", JOptionPane.ERROR_MESSAGE);
-					}
-				}
-			}
-		});
-		list_clients_model = new DefaultListModel<String>();
-		list_clients = new JList<String>(list_clients_model);
-		list_clients.addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				// TODO Auto-generated method stub
-				if (e.getValueIsAdjusting()) {
-					System.out.println(list_clients.getSelectedIndex());
-				}
-			}
-		});
-		frame = new JFrame();
-		frame.setTitle("Server - " + Server.ip);
-
-		frame.addWindowListener(new WindowListener() {
-
-			@Override
-			public void windowOpened(WindowEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void windowIconified(WindowEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void windowDeiconified(WindowEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void windowDeactivated(WindowEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void windowClosing(WindowEvent e) {
-				while (list_sockets.size() != 0) {
-					try {
-						for (int i = 0; i < list_client_states.size(); i++) {
-							list_client_states.set(i, 2); // srv close
-						}
-					} catch (Exception ex2) {
-						// TODO: handle exception
-						JOptionPane.showMessageDialog(null,
-								"Error!! " + ex2.getMessage(), "ERROR!!",
-								JOptionPane.ERROR_MESSAGE);
-					}
-				}
-				System.exit(0);
-			}
-
-			@Override
-			public void windowClosed(WindowEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void windowActivated(WindowEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		panel1 = new JPanel();
-		panel2 = new JPanel();
-		panel3 = new JPanel();
-		content = new JPanel();
-
-		panel1.setLayout(new GridLayout(1, 1, 1, 1));
-		panel1.add(btn_disconnect);
-
-		panel2.add(new JLabel(Server.ip));
-
-		panel3.setLayout(new BorderLayout(1, 1));
-		panel3.add(panel1, BorderLayout.NORTH);
-		panel3.add(new JScrollPane(list_clients), BorderLayout.CENTER);
-		panel3.add(panel2, BorderLayout.SOUTH);
-
-		content.setLayout(new GridLayout(1, 1, 1, 1));
-		content.add(panel3);
-		content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-		frame.setContentPane(content);
-		frame.pack();
-		frame.setSize(350, 400);
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
-	}
 
 	public static void disconnectClient(int index) {
 		// remove client from memory
 		try {
-			list_clients_model.removeElement(index);
+			UserInterface.list_clients_model.removeElement(index);
 			list_client_states.remove(index);
 			list_data.remove(index);
 			list_sockets.remove(index);
