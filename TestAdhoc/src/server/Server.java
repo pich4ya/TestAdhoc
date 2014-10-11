@@ -5,7 +5,6 @@ import java.net.*;
 import java.util.*;
 
 import javax.swing.*;
-import gui.UserInterface;
 
 public class Server extends Observable{
 	public static int port;
@@ -24,6 +23,7 @@ public class Server extends Observable{
 	
 	public Server(String ip, int port) {
 		Server.ip = ip;
+		Server.port = port;
 		list_sockets = new ArrayList<Socket>();
 		list_client_states = new ArrayList<Integer>();
 		list_data = new ArrayList<DataPackage>();

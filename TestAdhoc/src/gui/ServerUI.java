@@ -10,7 +10,7 @@ import javax.swing.event.*;
 import server.DataPackage;
 import server.Server;
 
-public class UserInterface implements Observer{
+public class ServerUI implements Observer{
 	private Server srv;
 
 	public static JFrame frame;
@@ -23,7 +23,7 @@ public class UserInterface implements Observer{
 	public static JList<String> list_clients;
 	public static DefaultListModel<String> list_clients_model;
 
-	public UserInterface(Server s) {
+	public ServerUI(Server s) {
 		this.makeUI();
 	}
 
@@ -92,6 +92,7 @@ public class UserInterface implements Observer{
 
 			@Override
 			public void windowClosing(WindowEvent e) {
+				// close all connections before existing program
 				while (list_sockets.size() != 0) {
 					try {
 						for (int i = 0; i < list_client_states.size(); i++) {
@@ -148,10 +149,13 @@ public class UserInterface implements Observer{
 
 	@Override
 	public void update(Observable o, Object arg) {
+		System.out.println("observable updated!1");
 		// TODO Auto-generated method stub
-		if(o == srv){
+		//if(o == srv){
+			System.out.println("observable updated!2");
 			String input = (String) arg;
 			if(input.startsWith("Add:")){
+				System.out.println("observable updated!3");
 				String updated[] = input.split(":");
 				list_clients_model.addElement(updated[1] + " - "
 						+ updated[2] + " - " + updated[3]);
@@ -160,6 +164,6 @@ public class UserInterface implements Observer{
 				int index = Integer.parseInt(update[1]);
 				list_clients_model.removeElement(index);
 			}
-		}
+		//}
 	}
 }
