@@ -4,11 +4,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
+import java.util.*;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 
 public class Server {
 	public static int port;
@@ -74,12 +73,31 @@ public class Server {
 		};
 		
 		sent = new Runnable() {
-			
+			ObjectOutputStream oos;
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				while(true){
-					
+					for (int i = 0; i < list_sockets.size(); i++) {
+						try {
+							oos = new ObjectOutputStream(list_sockets.get(i).getOutputStream());
+							int client_state = list_client_states.get(i);
+							oos.writeObject(client_state);
+							
+							oos = new ObjectOutputStream(list_sockets.get(i).getOutputStream());
+							oos.writeObject(list_data);
+							
+							if(client_state == 1){ // Kicked by server
+								disconnectClient(i);
+								i--;
+							}else if(client_state == 2){ // Server disconnected
+								disconnectClient(i);
+								i--;
+							}
+						} catch (Exception e) {
+							// TODO: handle exception
+						}
+					}
 				}
 			}
 		};
@@ -89,7 +107,29 @@ public class Server {
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
+				ObjectInputStream ois;
 				
+				while(true){
+					for (int i = 0; i < list_sockets.size(); i++) {
+						try {
+							ois = new ObjectInputStream(list_sockets.get(i).getInputStream());
+							int receive_state = (Integer) ois.readObject();
+							
+							ois = new ObjectInputStream(list_sockets.get(i).getInputStream());
+							DataPackage dp = (DataPackage) ois.readObject();
+							
+							list_data.set(i, dp);
+							if(receive_state == 1){
+								disconnectClient(i);
+								i--;
+							}
+							
+						} catch (Exception e) { // Client disconnected (Client didn't notify server about disconnecting)
+							disconnectClient(i);
+							i--;
+						}
+					}
+				}
 			}
 		};
 		
