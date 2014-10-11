@@ -24,6 +24,7 @@ public class ServerUI implements Observer{
 	public static DefaultListModel<String> list_clients_model;
 
 	public ServerUI(Server s) {
+		this.srv = s;
 		this.makeUI();
 	}
 
@@ -62,7 +63,7 @@ public class ServerUI implements Observer{
 			}
 		});
 		frame = new JFrame();
-		frame.setTitle("Server - " + Server.ip);
+		frame.setTitle("Server - " + srv.ip);
 
 		frame.addWindowListener(new WindowListener() {
 
@@ -129,7 +130,7 @@ public class ServerUI implements Observer{
 		panel1.setLayout(new GridLayout(1, 1, 1, 1));
 		panel1.add(btn_disconnect);
 
-		panel2.add(new JLabel(Server.ip));
+		panel2.add(new JLabel(srv.ip));
 
 		panel3.setLayout(new BorderLayout(1, 1));
 		panel3.add(panel1, BorderLayout.NORTH);

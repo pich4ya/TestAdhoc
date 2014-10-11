@@ -36,7 +36,7 @@ public class ClientUI implements Observer{
 			String response = (String) ois.readObject();
 			
 			JOptionPane.showMessageDialog(null, "Message: "+response, "Response", JOptionPane.INFORMATION_MESSAGE);
-			
+			oos.writeObject("exit");
 		//}catch (UnknownHostException uhe){
 		}catch(Exception e){
 			JOptionPane.showConfirmDialog(null, "Error: "+e.getMessage(),"ERROR!",JOptionPane.ERROR_MESSAGE);
