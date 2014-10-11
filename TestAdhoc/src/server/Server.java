@@ -12,85 +12,106 @@ import javax.swing.event.*;
 public class Server {
 	public static int port;
 	public static String ip;
-	
+
 	public static ServerSocket server;
 	public static ArrayList<Socket> list_sockets;
 	public static ArrayList<Integer> list_client_states;
 	public static ArrayList<DataPackage> list_data;
-	
+
 	private static Runnable accept, sent, receive;
-	
+
 	public static JFrame frame;
 	public static JPanel content;
 	public static JPanel panel1;
 	public static JPanel panel2;
 	public static JPanel panel3;
-	
+
 	public static JButton btn_disconnect;
 	public static JList<String> list_clients;
 	public static DefaultListModel<String> list_clients_model;
-	
-	public Server(int port){
+
+	public Server(int port) {
 		this("", port);
 	}
 	
-	public Server(String ip, int port){
+	public Server(String ip, int port) {
 		list_sockets = new ArrayList<Socket>();
-		list_client_states = new ArrayList<Integer>(); 
+		list_client_states = new ArrayList<Integer>();
 		list_data = new ArrayList<DataPackage>();
 		
+		this.initAcceptThread();
+		this.initSentThread();
+		this.initReceiveThread();
+		this.runServer();
+		this.makeUI();
+
+	}
+
+	private void initAcceptThread() {
 		accept = new Runnable() {
-			
+
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				new Thread(sent).start();
 				new Thread(receive).start();
-				while(true){
-					try{
+				while (true) {
+					try {
 						Socket socket = server.accept();
-						
-						ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+
+						ObjectInputStream ois = new ObjectInputStream(
+								socket.getInputStream());
 						String username = (String) ois.readObject();
-						
-						ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+
+						ObjectOutputStream oos = new ObjectOutputStream(
+								socket.getOutputStream());
 						oos.writeObject("Welcome to this server...");
-						
-						String hostAddr = socket.getInetAddress().getHostAddress();
+
+						String hostAddr = socket.getInetAddress()
+								.getHostAddress();
 						String hostName = socket.getInetAddress().getHostName();
-						
-						list_clients_model.addElement(username + " - " + hostAddr + " - " + hostName);
+
+						list_clients_model.addElement(username + " - "
+								+ hostAddr + " - " + hostName);
 						list_client_states.add(0);
-						
+
 						list_data.add(new DataPackage());
 						list_sockets.add(socket);
-						
-					}catch(Exception e){
-						JOptionPane.showMessageDialog(null, "Error: "+e.getMessage(), "ERROR!!", JOptionPane.ERROR_MESSAGE);
+
+					} catch (Exception e) {
+						JOptionPane.showMessageDialog(null,
+								"Error: " + e.getMessage(), "ERROR!!",
+								JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			}
 		};
-		
+	}
+
+	private void initSentThread() {
 		sent = new Runnable() {
 			ObjectOutputStream oos;
+
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
-				while(true){
+				while (true) {
 					for (int i = 0; i < list_sockets.size(); i++) {
 						try {
-							oos = new ObjectOutputStream(list_sockets.get(i).getOutputStream());
+							oos = new ObjectOutputStream(list_sockets.get(i)
+									.getOutputStream());
 							int client_state = list_client_states.get(i);
 							oos.writeObject(client_state);
-							
-							oos = new ObjectOutputStream(list_sockets.get(i).getOutputStream());
+
+							oos = new ObjectOutputStream(list_sockets.get(i)
+									.getOutputStream());
 							oos.writeObject(list_data);
-							
-							if(client_state == 1){ // Kicked by server
+
+							if (client_state == 1) { // Kicked by server
 								disconnectClient(i);
 								i--;
-							}else if(client_state == 2){ // Server disconnected
+							} else if (client_state == 2) { // Server
+															// disconnected
 								disconnectClient(i);
 								i--;
 							}
@@ -101,30 +122,36 @@ public class Server {
 				}
 			}
 		};
-		
+	}
+
+	private void initReceiveThread() {
 		receive = new Runnable() {
-			
+
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				ObjectInputStream ois;
-				
-				while(true){
+
+				while (true) {
 					for (int i = 0; i < list_sockets.size(); i++) {
 						try {
-							ois = new ObjectInputStream(list_sockets.get(i).getInputStream());
+							ois = new ObjectInputStream(list_sockets.get(i)
+									.getInputStream());
 							int receive_state = (Integer) ois.readObject();
-							
-							ois = new ObjectInputStream(list_sockets.get(i).getInputStream());
+
+							ois = new ObjectInputStream(list_sockets.get(i)
+									.getInputStream());
 							DataPackage dp = (DataPackage) ois.readObject();
-							
+
 							list_data.set(i, dp);
-							if(receive_state == 1){
+							if (receive_state == 1) {
 								disconnectClient(i);
 								i--;
 							}
-							
-						} catch (Exception e) { // Client disconnected (Client didn't notify server about disconnecting)
+
+						} catch (Exception e) { // Client disconnected (Client
+												// didn't notify server about
+												// disconnecting)
 							disconnectClient(i);
 							i--;
 						}
@@ -132,26 +159,32 @@ public class Server {
 				}
 			}
 		};
-		
-		try{
-			
+	}
+	
+	private void runServer(){
+		try {
+
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			
-			if(ip.isEmpty()){
+
+			if (ip.isEmpty()) {
 				Server.ip = InetAddress.getLocalHost().getHostAddress();
-			}else{ 
+			} else {
 				Server.ip = ip;
 			}
 			InetAddress addr = InetAddress.getByName(Server.ip);
 			server = new ServerSocket(Server.port, 0, addr);
-			
+
 			new Thread(accept).start();
-			
-			
-		}catch(IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e){
-			JOptionPane.showMessageDialog(null, "Error: "+e.getMessage(),"Error!", JOptionPane.ERROR_MESSAGE);
+
+		} catch (IOException | ClassNotFoundException | InstantiationException
+				| IllegalAccessException | UnsupportedLookAndFeelException e) {
+			JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(),
+					"Error!", JOptionPane.ERROR_MESSAGE);
 			System.exit(0);
 		}
+	}
+	
+	private void makeUI(){
 		btn_disconnect = new JButton();
 		btn_disconnect.setText("Disconnect");
 		btn_disconnect.addActionListener(new ActionListener() {
@@ -159,11 +192,12 @@ public class Server {
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
 				int selected = list_clients.getSelectedIndex();
-				if(selected!=-1){
-					try{
+				if (selected != -1) {
+					try {
 						list_client_states.set(selected, 1); // got kick
-					}catch(Exception ex){
-						JOptionPane.showMessageDialog(null, ex.getMessage(), "Error!", JOptionPane.ERROR_MESSAGE);
+					} catch (Exception ex) {
+						JOptionPane.showMessageDialog(null, ex.getMessage(),
+								"Error!", JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			}
@@ -174,97 +208,97 @@ public class Server {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				// TODO Auto-generated method stub
-				if(e.getValueIsAdjusting()){
+				if (e.getValueIsAdjusting()) {
 					System.out.println(list_clients.getSelectedIndex());
 				}
 			}
 		});
 		frame = new JFrame();
-		frame.setTitle("Server - "+Server.ip);
-		
+		frame.setTitle("Server - " + Server.ip);
+
 		frame.addWindowListener(new WindowListener() {
-			
+
 			@Override
 			public void windowOpened(WindowEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void windowIconified(WindowEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void windowDeiconified(WindowEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void windowDeactivated(WindowEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void windowClosing(WindowEvent e) {
-				while(list_sockets.size() != 0){
+				while (list_sockets.size() != 0) {
 					try {
 						for (int i = 0; i < list_client_states.size(); i++) {
 							list_client_states.set(i, 2); // srv close
 						}
 					} catch (Exception ex2) {
 						// TODO: handle exception
-						JOptionPane.showMessageDialog(null, "Error!! "+ex2.getMessage(),"ERROR!!", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(null,
+								"Error!! " + ex2.getMessage(), "ERROR!!",
+								JOptionPane.ERROR_MESSAGE);
 					}
 				}
 				System.exit(0);
 			}
-			
+
 			@Override
 			public void windowClosed(WindowEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void windowActivated(WindowEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
 		});
-		
+
 		panel1 = new JPanel();
 		panel2 = new JPanel();
 		panel3 = new JPanel();
 		content = new JPanel();
-		
-		panel1.setLayout(new GridLayout(1,1,1,1));
+
+		panel1.setLayout(new GridLayout(1, 1, 1, 1));
 		panel1.add(btn_disconnect);
-		
+
 		panel2.add(new JLabel(Server.ip));
-		
+
 		panel3.setLayout(new BorderLayout(1, 1));
 		panel3.add(panel1, BorderLayout.NORTH);
 		panel3.add(new JScrollPane(list_clients), BorderLayout.CENTER);
 		panel3.add(panel2, BorderLayout.SOUTH);
-		
-		content.setLayout(new GridLayout(1,1,1,1));
+
+		content.setLayout(new GridLayout(1, 1, 1, 1));
 		content.add(panel3);
 		content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		
+
 		frame.setContentPane(content);
 		frame.pack();
 		frame.setSize(350, 400);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
-		
-		
 	}
-	
-	public static void disconnectClient(int index){
+
+	public static void disconnectClient(int index) {
 		// remove client from memory
 		try {
 			list_clients_model.removeElement(index);
