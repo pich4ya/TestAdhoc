@@ -10,13 +10,19 @@ public class Server extends Observable{
 	public int port;
 	public String ip;
 
-	public ServerSocket server;
-	public ArrayList<Socket> list_sockets;
-	public ArrayList<Integer> list_client_states;
-	public ArrayList<DataPackage> list_data;
+	public static ServerSocket server;
+	public static ArrayList<Socket> list_sockets;
+	public static ArrayList<Integer> list_client_states;
+	public static ArrayList<DataPackage> list_data;
 
-	private static Runnable accept, sent, receive;
-
+	private static Thread accept, sent, receive;
+	
+	/*
+	private Object lock1 = new Object();
+	private Object lock2 = new Object();
+	private Object lock3 = new Object();
+	*/
+	
 	public Server(int port) {
 		this("", port); // use localhost (listening in all inf.)
 	}
@@ -24,140 +30,35 @@ public class Server extends Observable{
 	public Server(String ip, int port) {
 		this.ip = ip;
 		this.port = port;
-		this.list_sockets = new ArrayList<Socket>();
-		this.list_client_states = new ArrayList<Integer>();
-		this.list_data = new ArrayList<DataPackage>();
+		Server.list_sockets = new ArrayList<Socket>();
+		Server.list_client_states = new ArrayList<Integer>();
+		Server.list_data = new ArrayList<DataPackage>();
 		
 		this.initAcceptThread();
-		this.initSentThread();
-		this.initReceiveThread();
+		//this.initSentThread();
+		//this.initReceiveThread();
 		this.runServer();
 
 	}
 
-	public void initSentThread() {
-		sent = new Runnable() {
-			ObjectOutputStream oos;
-
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				while (true) {
-					for (int i = 0; i < list_sockets.size(); i++) {
-						System.out.println("sent thread 1");
-						try {
-							oos = new ObjectOutputStream(list_sockets.get(i)
-									.getOutputStream());
-							int client_state = list_client_states.get(i);
-							oos.writeObject(client_state);
-
-							oos = new ObjectOutputStream(list_sockets.get(i)
-									.getOutputStream());
-							oos.writeObject(list_data);
-
-							if (client_state == 1) { // Kicked by server
-								disconnectClient(i);
-								i--;
-								System.out.println("sent thread 2");
-							} else if (client_state == 2) { // Server
-															// disconnected
-								System.out.println("sent thread 3");
-								disconnectClient(i);
-								i--;
-							}
-						} catch (Exception e) {
-							// TODO: handle exception
-						}
-					}
-				}
-			}
-		};
+	private void initSentThread() {
+		Server.sent = new Thread(new ServerSender());
 	}
 
 	private void initReceiveThread() {
-		receive = new Runnable() {
-
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				ObjectInputStream ois;
-
-				while (true) {
-					for (int i = 0; i < list_sockets.size(); i++) {
-						try {
-							System.out.println("rev thread 1");
-							ois = new ObjectInputStream(list_sockets.get(i)
-									.getInputStream());
-							int receive_state = (Integer) ois.readObject();
-
-							ois = new ObjectInputStream(list_sockets.get(i)
-									.getInputStream());
-							DataPackage dp = (DataPackage) ois.readObject();
-
-							list_data.set(i, dp);
-							if (receive_state == 1) {
-								System.out.println("rev thread 2");
-								disconnectClient(i);
-								i--;
-							}
-							System.out.println("rev thread 3");
-						} catch (Exception e) { // Client disconnected (Client
-												// didn't notify server about
-												// disconnecting)
-							disconnectClient(i);
-							i--;
-						}
-					}
-				}
-			}
-		};
+		Server.receive = new Thread(new ServerReceiver());
 	}
 	
 	private void initAcceptThread() {
-		accept = new Runnable() {
-
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				new Thread(sent).start();
-				new Thread(receive).start();
-				while (true) {
-					try {
-						Socket socket = server.accept();
-
-						ObjectInputStream ois = new ObjectInputStream(
-								socket.getInputStream());
-						String username = (String) ois.readObject();
-
-						ObjectOutputStream oos = new ObjectOutputStream(
-								socket.getOutputStream());
-						oos.writeObject("Welcome to this server...");
-
-						String hostAddr = socket.getInetAddress()
-								.getHostAddress();
-						String hostName = socket.getInetAddress().getHostName();
-
-						/*
-						UserInterface.list_clients_model.addElement(username + " - "
-								+ hostAddr + " - " + hostName);
-						*/
-						setChanged();
-					    notifyObservers("Add:"+username+":"+hostAddr+":"+hostName);
-					      
-						list_client_states.add(0);
-
-						list_data.add(new DataPackage());
-						list_sockets.add(socket);
-						System.out.println("accept 1");
-
-					} catch (Exception e) {
-						JOptionPane.showMessageDialog(null,
-								"Error: " + e.getMessage(), "ERROR!!",
-								JOptionPane.ERROR_MESSAGE);
-					}
-				}
-			}
-		};
+		/*
+		Thread t1 = new Thread(sent);
+		Thread t2 = new Thread(receive);
+		t1.start();
+		t2.start();
+		*/
+		this.initSentThread();
+		this.initReceiveThread();
+		Server.accept = new Thread(new ServerAccepeter());
 	}
 	
 	private void runServer(){
@@ -169,32 +70,40 @@ public class Server extends Observable{
 				this.ip = InetAddress.getLocalHost().getHostAddress();
 			} // otherwise, specified by user initialization
 			InetAddress addr = InetAddress.getByName(this.ip);
-			server = new ServerSocket(this.port, 100, addr);
+			Server.server = new ServerSocket(this.port, 100, addr);
 
-			new Thread(accept).start();
+			
+			//new Thread(accept).start();
+			Server.accept.start();
+			
 
 		} catch (IOException | ClassNotFoundException | InstantiationException
 				| IllegalAccessException | UnsupportedLookAndFeelException e) {
-			JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(),
+			JOptionPane.showMessageDialog(null, "Error runServer(): " + e.getMessage(),
 					"Error!", JOptionPane.ERROR_MESSAGE);
 			System.exit(0);
 		}
 	}
 	
+	public void notifyUI(int index){
+		setChanged();
+		notifyObservers("remove:"+index);
+	}
 
-	public void disconnectClient(int index) {
+	public static void disconnectClient(Server ss, int index) {
 		System.out.println("disconnectClient() "+index);
 		// remove client from memory
 		try {
 			//UserInterface.list_clients_model.removeElement(index);
-			setChanged();
-		    notifyObservers("remove:"+index);
+			//removeClient(index);
+			ss.notifyUI(index);
 		    
-			list_client_states.remove(index);
-			list_data.remove(index);
-			list_sockets.remove(index);
+			Server.list_client_states.remove(index);
+			Server.list_data.remove(index);
+			Server.list_sockets.remove(index);
 		} catch (Exception e) {
-			// TODO: handle exception
+			JOptionPane.showMessageDialog(null, "Error disconnectClient(): " + e.getMessage(),
+					"Error!", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 }

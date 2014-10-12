@@ -12,10 +12,11 @@ public class Main {
 		ServerUI sui = new ServerUI(serv);
 		serv.addObserver(sui);
 		
+		
 		//Client user1 = new Client();
-		ClientUI cui = new ClientUI(14423);
-		
-		
+		ClientUI cui1 = new ClientUI(14423);
+		ClientUI cui2 = new ClientUI(14423);
+		ClientUI cui3 = new ClientUI(14423);
 	}
 
 }

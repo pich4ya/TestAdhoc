@@ -43,7 +43,8 @@ public class ServerUI implements Observer{
 				int selected = list_clients.getSelectedIndex();
 				if (selected != -1) {
 					try {
-						list_client_states.set(selected, 1); // got kick
+						srv.list_client_states.set(selected, 1); // got kick
+						System.out.println("list_client_states = "+srv.list_client_states.toString());
 					} catch (Exception ex) {
 						JOptionPane.showMessageDialog(null, ex.getMessage(),
 								"Error!", JOptionPane.ERROR_MESSAGE);
@@ -161,6 +162,7 @@ public class ServerUI implements Observer{
 				list_clients_model.addElement(updated[1] + " - "
 						+ updated[2] + " - " + updated[3]);
 			}else if(input.startsWith("remove:")){
+				System.out.println("observable updated!4");
 				String update[] = input.split(":");
 				int index = Integer.parseInt(update[1]);
 				list_clients_model.removeElement(index);
