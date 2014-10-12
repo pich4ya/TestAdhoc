@@ -29,7 +29,7 @@ public class ServerReceiver implements Runnable {
 					Server.list_data.set(i, dp);
 					if (receive_state == 1) {
 						System.out.println("rev thread 2");
-						Server.disconnectClient(this, i);
+						Server.disconnectClient(i);
 						i--;
 					}
 					System.out.println("rev thread 3");
@@ -39,7 +39,7 @@ public class ServerReceiver implements Runnable {
 					JOptionPane.showMessageDialog(null,
 							"Error initReceiveThread(): " + e.getMessage(), "ERROR!!",
 							JOptionPane.ERROR_MESSAGE);
-					disconnectClient(i);
+					Server.disconnectClient(i);
 					i--;
 				}
 			}

@@ -1,5 +1,7 @@
 package server;
 
+import gui.ServerUI;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -15,7 +17,7 @@ public class Server extends Observable{
 	public static ArrayList<Integer> list_client_states;
 	public static ArrayList<DataPackage> list_data;
 
-	private static Thread accept, sent, receive;
+	public static Thread accept,sent,receive;
 	
 	/*
 	private Object lock1 = new Object();
@@ -34,33 +36,10 @@ public class Server extends Observable{
 		Server.list_client_states = new ArrayList<Integer>();
 		Server.list_data = new ArrayList<DataPackage>();
 		
-		this.initAcceptThread();
-		//this.initSentThread();
-		//this.initReceiveThread();
 		this.runServer();
 
 	}
 
-	private void initSentThread() {
-		Server.sent = new Thread(new ServerSender());
-	}
-
-	private void initReceiveThread() {
-		Server.receive = new Thread(new ServerReceiver());
-	}
-	
-	private void initAcceptThread() {
-		/*
-		Thread t1 = new Thread(sent);
-		Thread t2 = new Thread(receive);
-		t1.start();
-		t2.start();
-		*/
-		this.initSentThread();
-		this.initReceiveThread();
-		Server.accept = new Thread(new ServerAccepeter());
-	}
-	
 	private void runServer(){
 		try {
 
@@ -72,8 +51,7 @@ public class Server extends Observable{
 			InetAddress addr = InetAddress.getByName(this.ip);
 			Server.server = new ServerSocket(this.port, 100, addr);
 
-			
-			//new Thread(accept).start();
+			Server.accept = new Thread(new ServerAccepeter());
 			Server.accept.start();
 			
 
@@ -85,19 +63,17 @@ public class Server extends Observable{
 		}
 	}
 	
-	public void notifyUI(int index){
-		setChanged();
-		notifyObservers("remove:"+index);
-	}
 
-	public static void disconnectClient(Server ss, int index) {
+
+	public static void disconnectClient(int index) {
 		System.out.println("disconnectClient() "+index);
 		// remove client from memory
 		try {
-			//UserInterface.list_clients_model.removeElement(index);
-			//removeClient(index);
-			ss.notifyUI(index);
-		    
+			ServerUI.list_clients_model.removeElement(index);
+			/*
+			setChanged();
+			notifyObservers("remove:"+index);
+		    */
 			Server.list_client_states.remove(index);
 			Server.list_data.remove(index);
 			Server.list_sockets.remove(index);

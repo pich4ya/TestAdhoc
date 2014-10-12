@@ -14,10 +14,7 @@ public class ServerUI implements Observer{
 	private Server srv;
 
 	public static JFrame frame;
-	public static JPanel content;
-	public static JPanel panel1;
-	public static JPanel panel2;
-	public static JPanel panel3;
+	public static JPanel content,panel1,panel2,panel3;
 
 	public static JButton btn_disconnect;
 	public static JList<String> list_clients;
@@ -30,9 +27,9 @@ public class ServerUI implements Observer{
 
 	private void makeUI() {
 		
-		ArrayList<Socket> list_sockets = this.srv.list_sockets;
-		ArrayList<Integer> list_client_states = this.srv.list_client_states;
-		ArrayList<DataPackage> list_data = this.srv.list_data;
+		ArrayList<Socket> list_sockets = Server.list_sockets;
+		ArrayList<Integer> list_client_states = Server.list_client_states;
+		//ArrayList<DataPackage> list_data = Server.list_data;
 		
 		btn_disconnect = new JButton();
 		btn_disconnect.setText("Disconnect");
@@ -43,8 +40,8 @@ public class ServerUI implements Observer{
 				int selected = list_clients.getSelectedIndex();
 				if (selected != -1) {
 					try {
-						srv.list_client_states.set(selected, 1); // got kick
-						System.out.println("list_client_states = "+srv.list_client_states.toString());
+						Server.list_client_states.set(selected, 1); // got kick
+						System.out.println("list_client_states = "+Server.list_client_states.toString());
 					} catch (Exception ex) {
 						JOptionPane.showMessageDialog(null, ex.getMessage(),
 								"Error!", JOptionPane.ERROR_MESSAGE);

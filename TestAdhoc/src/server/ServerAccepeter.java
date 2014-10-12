@@ -1,5 +1,7 @@
 package server;
 
+import gui.ServerUI;
+
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -16,7 +18,10 @@ public class ServerAccepeter implements Runnable {
 		while (true) {
 			try {
 				Socket socket = Server.server.accept();
-
+				Server.sent = new Thread(new ServerSender());
+				Server.receive = new Thread(new ServerReceiver());
+				Server.sent.start();
+				Server.receive.start();
 				ObjectInputStream ois = new ObjectInputStream(
 						socket.getInputStream());
 				String username = (String) ois.readObject();
@@ -29,13 +34,13 @@ public class ServerAccepeter implements Runnable {
 						.getHostAddress();
 				String hostName = socket.getInetAddress().getHostName();
 
-				/*
-				UserInterface.list_clients_model.addElement(username + " - "
+				
+				ServerUI.list_clients_model.addElement(username + " - "
 						+ hostAddr + " - " + hostName);
-				*/
+				/*
 				setChanged();
 			    notifyObservers("Add:"+username+":"+hostAddr+":"+hostName);
-			      
+			      */
 			    Server.list_client_states.add(0);
 
 				Server.list_data.add(new DataPackage());

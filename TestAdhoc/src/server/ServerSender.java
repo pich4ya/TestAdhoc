@@ -25,13 +25,13 @@ public class ServerSender implements Runnable{
 					oos.writeObject(Server.list_data);
 
 					if (client_state == 1) { // Kicked by server
-						disconnectClient(i);
+						Server.disconnectClient(i);
 						i--;
 						System.out.println("sent thread 2");
 					} else if (client_state == 2) { // Server
 													// disconnected
 						System.out.println("sent thread 3");
-						disconnectClient(i);
+						Server.disconnectClient(i);
 						i--;
 					}
 				} catch (Exception e) {
@@ -39,7 +39,7 @@ public class ServerSender implements Runnable{
 					JOptionPane.showMessageDialog(null,
 							"Error initSentThread(): " + e.getMessage(), "ERROR!!",
 							JOptionPane.ERROR_MESSAGE);
-					disconnectClient(i);
+					Server.disconnectClient(i);
 				}
 			}
 		}
